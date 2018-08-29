@@ -1,0 +1,497 @@
+Sentence,label
+I only test the public interface but I have been known to make specific private methods protected so I can either mock them out entirely or add in additional steps specific for unit testing purposes,0
+A general case is to hook in flags I can set from the unit test to make certain methods intentionally cause an exception to be able to test fault paths ; the exception triggering code is only in the test path in an overridden implementation of the protected method,0
+I minimize the need for this though and I always document the precise reasons to avoid confusion,0
+I am not sure whether this is a good technique but I developed the following pattern to unit test private methods I dont modify the visibility of the method that I want to test and add an additional method,1
+Instead I am adding an additional public method for every private method I want to test,0
+I call this additional method <code>Test-Port</code> and denote them with the prefix <code>t_</code>,0
+This <code>Test-Port</code> method then simply accesses the according private method,1
+Additionally I add a boolean flag to the <code>Test-Port</code> method to decide whether I grant access to the private method through the <code>Test-Port</code> method from outside,0
+This flag is then set globally in a static class where I place eg other global settings for the application,0
+So I can switch the access to the private methods on and off in one place eg in the corresponding unit test,0
+JML has a spec_public comment annotation syntax that allows you to specify a method as public during tests This syntax is discussed at http//wwweecsucfedu/~leavens/JML/jmlrefman/jmlrefman_2html#SEC12,1
+There also exists a program that translates JML specifications into JUnit tests,1
+I m not sure how well that works or what its capabilities are but it doesnt appear to be necessary since JML is a viable testing framework on its own,0
+Today I pushed a library to help testing private methods and fields,0
+It has been designed with Android in mind but it can really be used for any Java project,1
+If you got some code with private methods or fields or constructors you can use BoundBox,1
+It does exactly what you are looking for,0
+Here below is an example of a test that accesses two private fields of an Android activity to test it BoundBox makes it easy to test private/protected fields methods and constructors,0
+You can even access stuff that is hidden by inheritance,0
+Indeed BoundBox breaks encapsulation,1
+It will give you access to all that through reflection BUT everything is checked at compile time,1
+It is ideal for testing some legacy code,1
+As others have said dont test private methods directly,0
+Here are a few thoughts Run the code coverage on the unit tests,0
+If you see that methods are not fully tested add to the tests to get the coverage up,0
+Aim for 100 % code coverage but realize that you probably wo nt get it,0
+You can turn off access restrictions for reflection so that private means nothing,0
+The <code>setAccessible(true)</code> call does that,1
+The only restriction is that a ClassLoader may disallow you from doing that,1
+See Subverting Java Access Protection for Unit Testing Ross Burton for a way to do this in Java,0
+In C# you could have used <code>SystemReflection</code> though in Java I dont know,0
+Though I feel the urge to answer this anyway since if you `` feel you need to unit test private methods my guess is that there is something else which is wrong I would seriously consider looking at my architecture again with fresh eyes,1
+What if your test <code>src</code> are in the same package as the class that should be tested ?,0
+But in a different directory of course <code>classes</code> & <code>test/src</code> for your source code test/CODE _ ELEMENT_NN and test/CODE _ ELEMENT_NN for your test <code>test/classes</code>,0
+And let <code>classes</code> and test be in your classpath,0
+I have used reflection to do this in the past and in my opinion it was a big mistake,1
+Strictly speaking you should not be writing unit tests that directly test private methods,1
+What you should be testing is the public contract that the class has with other objects ; you should never directly test an object s internals,1
+If another developer wants to make a small internal change to the class which doesnt affect the classes public contract he/she then has to modify your reflection based test to ensure that it works,0
+If you do this repeatedly throughout a project unit tests then stop being a useful measurement of code health and start to become a hindrance to development and an annoyance to the development team,0
+What I recommend doing instead is using a code coverage tool such as Cobertura to ensure that the unit tests you write provide decent coverage of the code in private methods,1
+That way you indirectly test what the private methods are doing and maintain a higher level of agility,0
+Just two examples of where I would want to test a private method I understand the idea of only testing the `` contract,0
+But I dont see one can advocate actually not testing code - your mileage may vary,0
+So my tradeoff involves complicating the JUnits with reflection rather than compromising my security & SDK,1
+To test legacy code with large and quirky classes it is often very helpful to be able to test the one private or public method I m writing right now,1
+I use the junitxutilPrivateAccessor - package,0
+Right many alternatives listed the easiest and cleanest would be just using the enhanced for statement as below the Expression is of some type that is iterable,1
+For example to iterate through List ids we can simply so,0
+The basic loop is not recommended as you do not know the implementation of the list,1
+If that was a LinkedList each call to would be iterating over the list resulting in N ^ 2 time complexity,1
+In Java 8 collection classes that implement <code>Iterable</code> for example all lists now have <code>forEach</code> method The above example makes use of method-reference introduced in Java 8,1
+We can also iterate over a list using Stream as The advantage with later option is that we can also make use of parallel streams wherever appropriate,1
+If the objective is only to print the items irrespective of the order then we can use parallel stream as,0
+For a backward search you should use the following If you want to know a position use iteratorpreviousIndex,1
+It also helps to write an inner loop that compares two positions in the list iterators are not equal,1
+I think a better approach than setting the platform s default character set especially as you seem to have restrictions on affecting the application deployment let alone the platform is to call the much safer <code>StringgetBytes(charsetName)</code>,1
+That way your application is not dependent on things beyond its control,0
+I personally feel that <code>StringgetBytes()</code> should be deprecated as it has caused serious problems in a number of cases I have seen where the developer did not account for the default charset possibly changing,1
+Unfortunately the <code>fileencoding</code> property has to be specified as the JVM starts up ; by the time your main method is entered the character encoding used by <code>StringgetBytes()</code> and the default constructors of <code>InputStreamReader</code> and <code>OutputStreamWriter</code> has been permanently cached,1
+As Edward Grech points out in a special case like this the environment variable <code>JAVA_TOOL_OPTIONS</code> can be used to specify this property but it s normally done like this <code>CharsetdefaultCharset()</code> will reflect changes to the <code>fileencoding</code> property but most of the code in the core Java libraries that need to determine the default character encoding do not use this mechanism,1
+When you are encoding or decoding you can query the <code>fileencoding</code> property or <code>CharsetdefaultCharset()</code> to find the current default encoding and use the appropriate method or constructor overload to specify it,1
+Not clear on what you do and dont have control over at this point,0
+If you can interpose a different OutputStream class on the destination file you could use a subtype of OutputStream which converts Strings to bytes under a charset you define say UTF-8 by default,1
+If modified UTF-8 is suffcient for your needs you can use <code>DataOutputStreamwriteUTF(String)</code> If this approach is not feasible it may help if you clarify here exactly what you can and ca nt control in terms of data flow and execution environment though I know that s sometimes easier said than determined,1
+Two choices 1 / From the project 2 / If you have already other jar imported from the directory `` References Libraries Both will lead you to this screen where you can mange your libraries,1
+Just a comment on importing jars into Eclipse plug-in development projects In case you are developing Eclipse plug-ins it makes sense to use Eclipse s native bundling mechanism instead of just importing the jar into a plug-in project,1
+Eclipse or better its underlying OSGi runtime Equinox uses so-called bundles which contain some more information than plain jars eg version infos dependencies to other bundles exported packages ; see the MANIFESTMF file,1
+Because of this information OSGi bundles can be dynamically loaded/unloaded and there is automatic dependency resolution available in an OSGi/Eclipse runtime,1
+Hence using OSGi bundles instead of plain jars contained inside another OSGi bundle has some advantages,1
+BTW Eclipse plug-ins are the same thing as OSGi bundles,1
+There is a good chance that somebody already bundled a certain 3rd party library as an OSGi bundle,0
+You might want to take a look at the following bundle repositories,0
+Adding external Jar is not smart in case you want to change the project location in filesystem,1
+The best way is to add the jar to build path so your project will compile if exported,1
+Eclipse - > Preferences - > Java - > Build Path - > User Libraries - > New Name it - > Add external Jars I recommend dragging your new libraries into the eclipse folder before any of these steps to keep everything together that way if you reinstall Eclipse or your OS you wo nt have to rwlink anything except the JDK Now select the jar files you want,1
+Several people pointed out the specific answers for heap size with the jvm options of <code>-Xms</code> and <code>-Xms</code>,0
+I want to point out that this is not the only type of memory options for the jvm,0
+Specifically if you are get stack over flows then you ll want to increase the size of the stack by adding an additional option like <code>-Xss8m</code>,1
+I m sharing this information as my google searches on how to increase jvm memory took me to this solution and the solutions did nt work with high amounts of memory allocation,0
+Once I figured out what the specific settings were for I was able to google how to increase the stack size and found the missing param,0
+Hope this saves others time as it would of saved me a ton of time,0
+One natural way to reverse a <code>String</code> is to use a <code>StringTokenizer</code>Tokenizer and a stack,1
+<code>Stack</code> is a class that implements an easy-to-use last-in first-out LIFO stack of objects,1
+Put it in the stack frontwards Print the stack backwards,1
+It gets the value you typed and returns it reversed ;,0
+I am doing this using following two ways Reverse string by CHARACTERS Reverse string by WORDS,0
+It is very simple in minimum code of lines,0
+public String reverseWords String s,0
+I d like to add that it is possible to use relative path as-well,0
+So if you re pwd current directory/folder is folder1 and you want to parse folder1/subfolder you simply write in the code above instead of,0
+Java 8 <code>Fileswalk()</code> is good when you are soore it will not throw Avoid Java 8 <code>Fileswalk()</code> termination cause of javaniofileAccessDeniedException,1
+Just to expand on the accepted answer I store the filenames to an ArrayList instead of just dumping them to Systemoutprintln I created a helper class `` MyFileUtils so it could be imported by other projects I added the full path to the file name,0
+You would use it like this The ArrayList is passed by `` value but the value is used to point to the same ArrayList object living in the JVM Heap,0
+In this way each recursion call adds filenames to the same ArrayList we are NOT creating a new ArrayList on each recursive call,0
+Use reflection http//javasuncom/docs/books/tutorial/reflect/member/methodInvocationhtml Where `` class name is the name of the class objectToInvokeOn is of type Object and is the object you want to invoke the method on `` method name is the name of the method you want to call parameterTypes is of type Class and decalres the parameters the method takes params is of type Object and declares the parameters to be passed to the method,1
+This sounds like something that is doable with the Java Reflection package,1
+<code>wait</code> and <code>sleep</code> methods are very different Come to think about it the names are confusing in that respect ; however <code>sleep</code> is a standard name and <code>wait</code> is like the <code>WaitForSingleObject</code> or <code>WaitForMultipleObjects</code> in the Win API,1
+Wait and sleep are two different things,1
+You are correct - Sleep causes that thread to `` sleep and the CPU will go off and process other threads otherwise known as context switching wheras I believe Wait keeps the CPU processing the current thread,1
+We have both because although it may seem sensible to let other people use the CPU while you re not using it actualy there is an overhead to context switching - depending on how long the sleep is for it can be more expensive in CPU cycles to switch threads than it is to simply have your thread doing nothing for a few ms Also note that sleep forces a context switch,1
+Also - in general it s not possible to control context switching - during the Wait the OS may and will for longer waits choose to process other threads,1
+One key difference not yet mentioned is that while sleeping a Thread does not release the locks it holds while waiting releases the lock on the object that <code>wait()</code> is called on,1
+I found this link helpful which references this post,0
+It puts the difference between <code>sleep()</code> <code>wait()</code> and <code>yield()</code> in human terms,0
+in case the links ever go dead I ve included the post below with additional markup,0
+source http//wwwjgurucom/faq/viewjsp?EID47127,0
+Lets assume you are hearing songs,0
+As long as the current song is running the next song wont play ie Sleep called by next song If you finish the song it will stop and until you select play button notify it wont play ie wait called by current song,0
+In this both cases songs going to Wait states,0
+This is a very simple question because both these methods have a totally different use,1
+The major difference is to wait to release the lock or monitor while sleep doesnt release any lock or monitor while waiting,1
+Wait is used for inter-thread communication while sleep is used to introduce pause on execution,1
+This was just a clear and basic explanation if you want more than that then continue reading,0
+In case of <code>wait()</code> method thread goes in waiting state and it wo nt come back automatically until we call the <code>notify()</code> method or <code>notifyAll()</code> if you have more then one thread in waiting state and you want to wake all of those thread,1
+And you need synchronized or object lock or class lock to access the <code>wait()</code> or <code>notify()</code> or <code>notifyAll()</code> methods,1
+And one more thing the <code>wait()</code> method is used for inter-thread communication because if a thread goes in waiting state you ll need another thread to wake that thread,1
+But in case of <code>sleep()</code> this is a method which is used to hold the process for few seconds or the time you wanted,1
+Because you dont need to provoke any <code>notify()</code> or <code>notifyAll()</code> method to get that thread back,0
+Or you dont need any other thread to call back that thread,0
+Like if you want something should happen after few seconds like in a game after user s turn you want the user to wait until the computer plays then you can mention the <code>sleep()</code> method,1
+And one more important difference which is asked often in interviews <code>sleep()</code> belongs to <code>Thread</code> class and <code>wait()</code> belongs to <code>Object</code> class,1
+These are all the differences between <code>sleep()</code> and <code>wait()</code>,0
+And there is a similarity between both methods they both are checked statement so you need try catch or throws to access these methods,0
+I hope this will help you,0
+There are a lot of answers here but I could nt find the semantic distinction mentioned on any,0
+It s not about the thread itself ; both methods are required as they support very different use-cases,0
+<code>sleep()</code> sends the Thread to sleep as it was before it just packs the context and stops executing for a predefined time,1
+So in order to wake it up before the due time you need to know the Thread reference,0
+This is not a common situation in a multi-threaded environment,0
+It s mostly used for time-synchronization eg wake in exactly 35 seconds and/or hard-coded fairness just sleep for a while and let others threads work,0
+<code>wait()</code> on the contrary is a thread or message synchronization mechanism that allows you to notify a Thread of which you have no stored reference nor care,1
+You can think of it as a publish-subscribe pattern <code>wait</code> subscribe and <code>notify()</code> publish,1
+Basically using <code>sleep()</code> you are sending a message that might even not be received at all and normally you dont care,1
+They could be implemented in the same manner in the underlying OS or not at all as previous versions of Java had no real multithreading ; probably some small VMs doesnt do that either,0
+dont forget Java runs on a VM so your code will be transformed in something different according to the VM/OS/HW it runs on,0
+The methods are used for different things,0
+You can specify in your IDE,0
+eg for eclipse in Run Configuration > Vm Arguments you enter - Xmx800m - Xms500m,1
+You can use <code>DoubleparseDouble()</code> to convert a <code>String</code> to a <code>double</code> For your case it looks like you want,1
+This should convert the string aString into the double d,0
+Use <code>new BigDecimal(string)</code>,1
+This will guarantee proper calculation later,0
+As a rule of thumb - always use <code>BigDecimal</code> for sensitive calculations like money,1
+Integer class has static method toString - you can use it,1
+One that I use often Point is there are plenty of ways to do this all equally valid,0
+As to which is most optimum/efficient you d have to ask someone else,0
+The way I know how to convert an integer into a string is by using the following code and If you had an integer i and a string s then the following would apply If you wanted to convert a string `` s into an integer `` i then the following would work,0
+This is the method which i used to convert the integer to stringCorrect me if i did wrong,0
+Always use either <code>StringvalueOf(number)</code> or <code>IntegertoString(number)</code>,1
+Using + number is an overhead and does the following,0
+<code>IntegertoString</code> calls the static method in the class <code>Integer</code>,0
+It does not need an instance of <code>Integer</code>,0
+If you call new <code>new Integer(i)</code> i you create an instance of type <code>Integer</code> which is a full Java object encapsulating the value of your <code>toString</code>,0
+Then you call the <code>int</code> method on it to ask it to return a string representation of itself,0
+Summary is in first case it returns the objects string representation where as in second case it returns the string representation of integer,0
+In terms of performance measurement if you are considering the time performance then the IntegertoString i ; is expensive if you are calling less than 100 million times,1
+Else if it is more than 100 million calls then the new Integer 10,0
+toString will perform better,1
+Below is the code through u can try to measure the performance In terms of memory the will take more memory as it will create the object each time so memory fragmentation will happen,0
+I also highly reccomend using <code>int integer 42; String string integer + ;</code> Simple and effective,1
+Difference between HashMap and HashTable / HashMap vs HashTable,0
+Synchronization or Thread Safe Hash Map is not synchronized hence it is not thred safe and it can not be shared between multiple threads without proper synchronized block whereas Hashtable is synchronized and hence it is thread safe,1
+Null keys and null values HashMap allows one null key and any number of null valuesHashtable does not allow null keys or values,1
+Iterating the values Iterator in the HashMap is a fail-fast iterator while the enumerator for the Hashtable is not and throw ConcurrentModificationException if any other Thread modifies the map structurally by adding or removing any element except Iterator s own remove method,1
+Superclass and Legacy HashMap is subclass of AbstractMap class whereas Hashtable is subclass of Dictionary class,0
+Performance As HashMap is not synchronized it is faster as compared to Hashtable,1
+Refer http//modernpathshalacom/Article/1020/difference-between-hashmap-and-hashtable-in-java for examples and interview questions and quiz related to Java collection,0
+Apart from the differences already mentioned it should be noted that since Java 8 <code>HashMap</code> dynamically replaces the Nodes linked list used in each bucket with TreeNodes red-black tree so that even if high hash collisions exist the worst case when searching is O log n for <code>HashMap</code> Vs O n in <code>Hashtable</code>,1
+* The aforementioned improvement has not been applied to <code>Hashtable</code> yet but only to <code>HashMap</code> Linked<code>LinkedHashMap</code> and Concurrent<code>ConcurrentHashMap</code>,0
+Differences between HashMap and Hashtable in Java 1 Thread Safe 2 Inherited From 3 Null Keys And Null Values 4 Traversal 5 Fail-Fast Vs Fail-Safe 6 Performance 7 Legacy Class 8 Member Of Java Collection Framework Which is more efficient for non-threaded applications ?,1
+There is many good answer already posted,0
+I m adding few new points and summarizing it,0
+<code>HashMap</code> and <code>Hashtable</code> both are used to store data in key and value form,1
+Both are using hashing technique to store unique keys,1
+But there are many differences between <code>HashMap</code> and <code>HashMap</code> classes that are given below,0
+<code>HashMap</code> 1 <code>HashMap</code> is non synchronized,0
+It is not-thread safe and ca nt be shared between many threads without proper synchronization code,1
+2 <code>HashMap</code> allows one null key and multiple null values,1
+3 <code>Map m CollectionssynchronizedMap(HashMap);</code> is a new class introduced in JDK 12,0
+4 <code>HashMap</code> is fast,1
+5 We can make the <code>HashMap</code> as synchronized by calling this code Map m CollectionssynchronizedMap <code>HashMap</code> ; 6 <code>Hashtable</code> is traversed by Iterator,1
+7 Iterator in <code>Hashtable</code> is fail-fast,1
+8 <code>Hashtable</code> inherits AbstractMap class,0
+<code>Hashtable</code> 1 <code>Hashtable</code> is synchronized,1
+It is thread-safe and can be shared with many threads,0
+2 <code>Hashtable</code> doesnt allow any null key or value,1
+3 <code>Hashtable</code> is a legacy class,1
+4 <code>Hashtable</code> is slow,1
+If you use the first answer Google takes you here change the comparator to add an equal clause otherwise you can not get values from the sorted_map by keys,0
+Create customized comparator and use it while creating new TreeMap object,0
+Use the below code in your main func Output,0
+You can try Guava s multimaps As a result you get a map from original values to collections of keys that correspond to them,1
+This approach can be used even if there are multiple keys for the same value,0
+as map is unordered to sort it we can do following You should note that unlike a hash map a tree map guarantees that its elements will be sorted in ascending key order,1
+To accomplish this with the new features in Java 8 The entries are ordered by their values using the given comparator,0
+Alternatively if your values are mutually comparable no explicit comparator is needed The returned list is a snapshot of the given map at the time this method is called so neither will reflect subsequent changes to the other,0
+For a live iterable view of the map The returned iterable creates a fresh snapshot of the given map each time it s iterated so barring concurrent modification it will always reflect the current state of the map,0
+With Java 8 you can use the streams api to do it in a significantly less verbose way,1
+I ve merged the solutions of user157196 and Carter Page,0
+Java 8 offers a new answer convert the entries into a stream and use the comparator combinators from MapEntry This will let you consume the entries sorted in ascending order of value,1
+If you want descending value simply reverse the comparator If the values are not comparable you can pass an explicit comparator You can then proceed to use other stream operations to consume the data,0
+For example if you want the top 10 in a new map Or print to <code>Systemout</code>,0
+Best Approach Output,0
+If there s not any value bigger than the size of the map you could use arrays this should be the fastest approach,1
+There are a lot of answers for this question already but none provided me what I was looking for a map implementation that returns keys and entries sorted by the associated value and maintains this property as keys and values are modified in the map,0
+Two other questions ask for this specifically,0
+I cooked up a generic friendly example that solves this use case,0
+This implementation does not honor all of the contracts of the Map interface such as reflecting value changes and removals in the sets return from keySet and entrySet in the original object,0
+I felt such a solution would be too large to include in a Stack Overflow answer,0
+If I manage to create a more complete implementation perhaps I will post it to Github and then to it link in an updated version of this answer,0
+My solution is a quite simple approach in the way of using mostly given APIs,0
+We use the feature of Map to export its content as Set via entrySet method,0
+We now have a Set containing MapEntry objects,0
+Okay a Set does not carry an order but we can take the content an put it into an ArrayList,0
+It now has an random order but we will sort it anyway,0
+As ArrayList is a Collection we now use the Collectionssort method to bring order to chaos,0
+Because our MapEntry objects do not realize the kind of comparison we need we provide a custom Comparator,1
+Here is the code by Java 8 with AbacusUtil Declaration ： I m the developer of AbacusUtil,0
+Hashtable is synchronized whereas HashMap is nt,1
+That makes Hashtable slower than Hashmap,0
+For non-threaded apps use HashMap since they are otherwise the same in terms of functionality,1
+In addition to what izb said <code>HashMap</code> allows null values whereas the <code>Hashtable</code> does not,1
+Also note that <code>Hashtable</code> extends the <code>Dictionary</code> class which as the Javadocs state is obsolete and has been replaced by the <code>Map</code> interface,1
+There are several differences between <code>HashMap</code> and Hashtable in Java Since synchronization is not an issue for you I d recommend <code>ConcurrentHashMap</code>,1
+<code>HashMap</code> An implementation of the <code>Map</code> interface that uses hash codes to index an array,0
+<code>Hashtable</code> Hi 1998 called,0
+They want their collections API back,0
+Seriously though you re better off staying away from <code>Hashtable</code> altogether,0
+For single-threaded apps you dont need the extra overhead of syncrhonisation,1
+For highly concurrent apps the paranoid synchronisation might lead to starvation deadlocks or unnecessary garbage collection pauses,1
+Like Tim Howland pointed out you might use Concurrent<code>ConcurrentHashMap</code> instead,1
+Note that a lot of the answers state that Hashtable is synchronised,0
+In practice this buys you very little,0
+The synchronization is on the accessor / mutator methods will stop two threads adding or removing from the map concurrently but in the real world you will often need additional synchronisation,0
+A very common idiom is to `` check then put - ie look for an entry in the Map and add it if it does not already exist,0
+This is not in any way an atomic operation whether you use Hashtable or HashMap,0
+An equivalently synchronised HashMap can be obtained by But to correctly implement this logic you need additional synchronisation of the form Even iterating over a Hashtable s entries or a HashMap obtained by CollectionssynchronizedMap is not thread safe unless you also guard the Map from being modified through additional synchronization,1
+Implementations of the ConcurrentMap interface for example ConcurrentHashMap solve some of this by including thread safe check-then-act semantics such as,0
+Another key difference between hashtable and hashmap is that Iterator in the HashMap is fail-fast while the enumerator for the Hashtable is not and throw ConcurrentModificationException if any other Thread modifies the map structurally by adding or removing any element except Iterator s own remove method,1
+But this is not a guaranteed behavior and will be done by JVM on best effort,0
+My source http//javarevisitedblogspotcom/2010/10/difference-between-hashmap-andhtml,0
+This question is often asked in interview to check whether candidate understands correct usage of collection classes and is aware of alternative solutions available,0
+Note on Some Important Terms HashMap can be synchronized by <code>Map m CollectionssynchronizeMap(hashMap);</code> Map provides Collection views instead of direct support for iteration via Enumeration objects,0
+Collection views greatly enhance the expressiveness of the interface as discussed later in this section,0
+Map allows you to iterate over keys values or key-value pairs ; Hashtable does not provide the third option,1
+Map provides a safe way to remove entries in the midst of iteration ; Hashtable did not,1
+Finally Map fixes a minor deficiency in the Hashtable interface,0
+Hashtable has a method called contains which returns true if the Hashtable contains a given value,0
+Given its name you d expect this method to return true if the Hashtable contained a given key because the key is the primary access mechanism for a Hashtable,0
+The Map interface eliminates this source of confusion by renaming the method containsValue,0
+Also this improves the interface s consistency -- containsValue parallels containsKey,0
+Beside all the other important aspects already mentioned here Collections API eg Map interface is being modified all the time to conform to the `` latest and greatest additions to Java spec,0
+For example compare Java 5 Map iterating versus the old Hashtable approach In Java 18 we are also promised to be able to construct and access HashMaps like in good old scripting languages Update No they wo nt land in 18 Are Project Coin s collection enhancements going to be in JDK8 ?,0
+Take a look at this chart,0
+It provides comparisons between different data structures along with HashMap and Hashtable,0
+The comparison is precise clear and easy to understand,0
+Java Collection Matrix,0
+<code>HashMap</code> and <code>Hashtable</code> have significant algorithmic differences as well,0
+No one has mentioned this before so that s why I am bringing it up,0
+<code>HashMap</code> will construct a hash table with power of two size increase it dynamically such that you have at most about eight elements collisions in any bucket and will stir the elements very well for general element types,1
+1 Hashtable is synchronized whereas hashmap is not,1
+2 Another difference is that iterator in the HashMap is fail-safe while the enumerator for the Hashtable is nt,1
+If you change the map while iterating you ll know,0
+3 HashMap permits null values in it while Hashtable doesnt,1
+HashMap - It is a class available inside javautil package and it is used to store the element in key and value format,0
+Hashtable - It is a legacy class which is being recognized inside collection framework,0
+There are 5 basic differentiations with HashTable and HashMaps,0
+My small contribution,0
+Keep in mind that <code>HashTable</code> was legacy class before Java Collections Framework JCF was introduced and was later retrofitted to implement the <code>Map</code> interface,0
+So was <code>Vector</code> and <code>Stack</code>,0
+Therefore always stay away from them in new code since there always better alternative in the JCF as others had pointed out,1
+Here is the Java collection cheat sheet that you will find useful,0
+HashMap and HashTable 1 Hashtable and Hashmap implement the javautilMap interface 2 Both Hashmap and Hashtable is the hash based collection,0
+and working on hashing,0
+so these are similarity of HashMap and HashTable,0
+1 First difference is HashMap is not thread safe While HashTable is ThreadSafe 2 HashMap is performance wise better because it is not thread safe,1
+while Hashtable performance wise is not better because it is thread safe,1
+so multiple thread can not access Hashtable at the same time,0
+Old and classic topic just want to add this helpful blog that explains this http//blogmanishchhabracom/2012/08/the-5-main-differences-betwen-hashmap-and-hashtable/ Blog by Manish Chhabra,0
+The example So change the map into a set this way You will create class <code>Results</code> and the Comparator class This way you can easily add more dependencies,0
+And as the last point I ll add simple iterator,0
+Three 1-line answers I would use Google Collections Guava to do this - if your values are <code>Comparable</code> then you can use Which will create a function object for the map that takes any of the keys as input returning the respective value and then apply natural <code>Ordering</code> ordering to them the values,1
+If they re not <code>Comparator</code> then you ll need to do something along the lines of These may be applied to a TreeMap as <code>Comparable</code> extends <code>comparable</code> or a LinkedHashMap after some sorting NB If you are going to use a TreeMap remember that if a comparison 0 then the item is already in the list which will happen if you have multiple values that compare the same,0
+To alleviate this you could add your key to the comparator like so presuming that your keys and values are <code>hashCode</code> Apply natural ordering to the value mapped by the key and compound that with the natural ordering of the key Note that this will still not work if your keys compare to 0 but this should be sufficient for most <code>equals</code> items as <code>compareTo</code> <code>TreeMapget()</code> and <code>compare()</code> are often in sync See <code>compare()</code>,0
+onResultOf and FunctionsforMap,0
+So now that we ve got a comparator that does what we want we need to get a result from it,0
+Now this will most likely work work but Point 1 is a bit of a deal-breaker for me ; google collections is incredibly lazy which is good you can do pretty much every operation in an instant ; the real work is done when you start using the result and this requires copying a whole map !,0
+dont worry though ; if you were obsessed enough with having a `` live map sorted in this manner you could solve not one but both !,0
+But before that we check the hash map to see that the key is not actually a duplicate,0
+Also the comparator that we create will also include the key so that duplicate values dont delete the non-duplicate keys due to comparison,0
+These 2 items are vital for ensuring the map contract is kept ; if you think you dont want that then you re almost at the point of reversing the map entirely to Map < V K >,0
+The constructor would need to be called as,0
+Here is an OO solution ie doesnt use <code>static</code> methods Hereby donated to the public domain,0
+This is a variation of Anthony s answer which doesnt work if there are duplicate values Note that it s rather up in the air how to handle nulls,0
+One important advantage of this approach is that it actually returns a Map unlike some of the other solutions offered here,0
+Please try here,0
+I am modifing the code for value sort,0
+Afaik the most cleaner way is utilizing collections to sort map on value,1
+Use a generic comparator such as,0
+The answer voted for the most does not work when you have 2 items that equals,0
+the TreeMap leaves equal values out,0
+the exmaple unsorted map results So leaves out E! !,0
+For me it worked fine to adjust the comparator if it equals do not return 0 but -1,0
+in the example now it returns unsorted map results as a response to Aliens 2011 nov 22 I Am using this solution for a map of Integer Id s and names but the idea is the same so might be the code above is not correct I will write it in a test and give you the correct code this is the code for a Map sorting based on the solution above and this is the test class I just tested it and this works for the Integer String Map here is the code for the Comparator of a Map and this is the testcase for this of cource you can make this a lot more generic but I just needed it for 1 case the Map,1
+This method will just serve the purpose,1
+the ` setback is that the Values must implement the javautilComparable interface http//javawithswarangablogspotcom/2011/06/generic-method-to-sort-hashmaphtml,1
+Since TreeMap < > does not work for values that can be equal I used this You might want to put list in a LinkedHashMap but if you re only going to iterate over it right away that s superfluous,1
+Some simple changes in order to have a sorted map with pairs that have duplicate values,0
+In the compare method class ValueComparator when values are equal do not return 0 but return the result of comparing the 2 keys,0
+Keys are distinct in a map so you succeed to keep duplicate values which are sorted by keys by the way,0
+So the above example could be modified like this,0
+If you have duplicate keys and only a small set of data < 1000 and your code is not performance critical you can just do the following inputUnsortedMap is the input to the code,0
+The variable sortedOutputMap will contain the data in decending order when iterated over,0
+To change order just change > to a < in the if statement,0
+Is not the fastest sort but does the job without any additional dependencies,0
+For sure the solution of Stephen is really great but for those who ca nt use Guava Here s my solution for sorting by value a map,0
+This solution handle the case where there are twice the same value etc,0
+The exec http//wwwideonecom/dq3Lu The output Hope it will help some folks,0
+Instead of using <code>Collectionssort</code> as some do I d suggest using <code>Arrayssort</code>,1
+Actually what <code>Collectionssort</code> does is something like this It just calls <code>toArray</code> on the list and then uses <code>Arrayssort</code>,0
+This way all the map entries will be copied three times once from the map to the temporary list be it a LinkedList or ArrayList then to the temporary array and finally to the new map,0
+My solution ommits this one step as it does not create unnecessary LinkedList,0
+Here is the code generic-friendly and performance-optimal,0
+We simply sort a map just like this,0
+While I agree that the constant need to sort a map is probably a smell I think the following code is the easiest way to do it without using a different data structure -RCB-,0
+And here is an embarrassingly incomplete unit test -RCB- The result is a sorted list of MapEntry objects from which you can obtain the keys and values,0
+Based on @devinmoore code a map sorting methods using generics and supporting both ascending and descending ordering,0
+This code can break in multiple ways,0
+If you intend to use the code provided be sure to read the comments as well to be aware of the implications,0
+For example values can no longer be retrieved by their key,0
+<code>get</code> always returns <code>null</code>,0
+It seems much easier than all of the foregoing,0
+Use a TreeMap as follows Output,0
+I ve looked at the given answers but a lot of them are more complicated than needed or remove map elements when several keys have same value,0
+Here is a solution that I think fits better Note that the map is sorted from the highest value to the lowest,1
+Here s a generic-friendly version you re free to use And an associated JUnit4 test so you dont have to take my word for it Java 7 Version Java 8 Version,0
+This will sort according to the value in ascending order ; for descending order it is just possible to uncomment the call to <code>CollectionsreverseOrder()</code>,0
+This is just too complicated,0
+Maps were not supposed to do such job as sorting them by Value,0
+The easiest way is to create your own Class so it fits your requirement,0
+In example lower you are supposed to add TreeMap a comparator at place where * is,0
+But by java API it gives comparator only keys not values,0
+All of examples stated here is based on 2 Maps,0
+One Hash and one new Tree,0
+First of all you need to understand the correct way to launch a program using the <code>java</code> or <code>javaw</code>w command,0
+The normal syntax 1 is this where <option> is a command line option starting with a - character <class-name> is a fully qualified Java class name and <argument> is an arbitrary command line argument that gets passed to your application,0
+1 - There is a second syntax for `` executable JAR files which I will describe at the bottom,0
+The fully qualified classname is conventionally written as you would in Java source code ; eg,0
+However some versions of the <code><option></code> command allow you to use slashes instead of periods ; eg which confusingly looks like a file pathname but is nt one,0
+Note that the term fully qualified classname is standard Java terminology not something I just made up to confuse you - Here is an example of what a <code><class-name></code> command should look like The above is going to cause the <code><argument></code> command to do the following When you get the message `` Could not find or load main class that means that the first step has failed,0
+The <code>java</code> command was not able to find the class,0
+And indeed the in the message will be the fully qualified class name that <code>java</code> is looking for,0
+So why might it be unable to find the class ?,0
+The first likely cause is that you may have provided the wrong class name,0
+Or the right class name but in the wrong form,0
+Considering the example above here a variety of wrong ways to specify the class name The second likely cause is that the class name is correct but that the <code>java</code> command can not find the class,0
+To understand this you need to understand the concept of the `` classpath,0
+This is explained well by the Oracle documentation So if you have specified the class name correctly the next thing to check is that you have specified the classpath correctly When you put a directory on the classpath it notionally corresponds to the root of the qualified name space,0
+Classes are located in the directory structure beneath that root by mapping the fully qualified name to a pathname,0
+So for example if / usr/local/acme / classes is on the class path then when the JVM looks for a class called <code>java</code> it will look for a,0
+class file with this pathname If you had put / usr/local/acme / classes/com/acme / example on the classpath then the JVM would nt be able to find the class,0
+The classpath needs to include all of the other non-system classes that your application depends on,0
+The system classes are located automatically and you rarely need to concern yourself with this,0
+For the main class to load correctly the JVM needs to find Note the JLS and JVM specifications allow some scope for a JVM to load classes `` lazily and this can affect when a classloader exception is thrown,0
+It occasionally happens that someone puts a source code file into the the wrong folder in their source code tree or they leave out the <code>java</code> declaration,0
+If you do this in an IDE the IDE s compiler will tell you about this immediately,0
+Similarly if you use a decent Java build tool the tool will run <code>java</code>c in a way that will detect the problem,0
+However if you build your Java code by hand you can do it in such a way that the compiler doesnt notice the problem and the resulting,0
+class file is not in the place that you expect it to be,0
+The alternative syntax used for `` executable JAR files is as follows eg,0
+In this case the name of the entry-point class ie <code>comacmeexampleFoon</code> and the classpath are specified in the MANIFEST of the JAR file,0
+A typical Java IDE has support for running Java applications in the IDE JVM itself or in a child JVM,0
+These are generally immune from this particular exception because the IDE uses its own mechanisms to construct the runtime classpath identify the main class and create the <code>package</code> command line,0
+However it is still possible for this exception to occur if you do things behind the back of the IDE,0
+For example if you have previously set up an Application Launcher for your Java app in Eclipse and you then moved the JAR file containing the `` main class to a different place in the file system without telling Eclipse Eclipse would unwittingly launch the JVM with an incorrect classpath,0
+In short if you get this problem in an IDE check for things like stale IDE state broken project references or broken launcher configurations,0
+It is also possible for an IDE to simply get confused,0
+IDE s are hugely complicated pieces of software comprising many interacting parts,0
+Many of these parts adopt various caching strategies in order to make the IDE as a whole responsive,0
+These can sometimes go wrong and one possible symptom is problems when launching applications,0
+If you suspect this could be happening it is worth restarting your IDE,0
+Sometimes what might be causing the issue has nothing to do with the main class and I had to find this out the hard way,0
+It was a referenced library that I moved and it gave me the I just deleted that reference added it again and it worked fine again,0
+First set the path using this command ; Then you need to load the program,0
+Type `` cd folder name in the stored drive and compile it,0
+For Example if my program stored on the D drive type `` D press enter and type cd folder name,0
+In my case error appeared because I had supplied the source file name instead of the class name,0
+We need to supply the class name containing the main method to the interpreter,0
+If your source code name is HelloWorldjava your compiled code will be HelloWorldclass,0
+You will get that error if you call it using Instead use this I hope it helps,0
+What helped me was specifying the classpath on the command line for example,0
+If your main method is in the class under a package you should run it over the hierarchical directory,0
+Assume there is a source code file Mainjava For running this code you should place <code>MainClass</code> in the package like directory <code>/com/test/MainJava</code>,0
+And in the root directory use <code>java comtestMain</code>,0
+If your classes are in packages then you have to <code>cd</code> to the main directory and run using the full name of the class packageNameMainClassName,0
+Example My classes are in here The full name of my main class is So I <code>cd</code> back to the main directory Then issue the <code>java</code> command,0
+In this instance you have It s because you are using - classpath but the dash is not the same dash used by <code>java</code> on the command prompt,0
+I had this issue copying and pasting from Notepad to cmd,0
+When the same code works on one PC but it shows the error in another the best solution I have ever found is compiling like the following,0
+I spent a decent amount of time trying to solve this problem,0
+I thought that I was somehow setting my classpath incorrectly but the problem was that I typed,0
+According to the error message `` Could not find or load main class there are two categories of problems Main class could not be found when there is typo or wrong syntax in the fully qualified class name or it does not exist in the provided classpath,0
+Main class could not be loaded when the class can not be initiated typically the main class extends another class and that class does not exist in the provided classpath,0
+For example If camel-spring is not included this error will be reported,0
+In Java when you sometimes run the JVM from the command line using the java executable and are trying to start a program from a class file with public static void main PSVM you might run into the below error even though the classpath parameter to the JVM is accurate and the class file is present on the classpath This happens if the class file with PSVM could not be loaded,0
+One possible reason for that is that the class may be implementing an interface or extending another class that is not on the classpath,0
+Normally if a class is not on the classpath the error thrown indicates as such,0
+But if the class in use is extended or implemented java is unable to load the class itself,0
+Reference https//wwwcomputingnotesnet/java/error-main-class-not-found-or-loaded/,0
+On Windows put <code>;</code> at the CLASSPATH value in the beginning,0
+I was using Windows 8 with a 64-bit OS,0
+I just changed the path to <code>Program Files (x86)</code> and then it started work,0
+I put this line in the eclipseini file,0
+This might happen if you have several versions of Java on the same machine,0
+To fix this I did the following,0
+If you install a 64-bit Eclipse version on a PC with a 32-bit JRE this is guaranteed to occur,0
+So the solution is quite straightforward You need to synchronise them by updating either one,0
+This shall happen when downloading Oracle Fusion middleware and Eclipse expects a 32-bit environment while your JRE is 64-bit and your JAVA home is pointing to a 64-bit JDK,0
+I got this error and found that my PATH variable on Windows was probably changed,0
+First in my PATH was this entry and Eclipse ran <code>C\ProgramData\Oracle\Java\javapath\javaw</code> - which gave the error,0
+I suspect that this is something that came along with an installation of Java 8,0
+I have several Java versions installed 67 and 8 so I removed that entry from the PATH and tried to restart Eclipse again which worked fine,0
+Instructions on how to edit PATH variable,0
+I have just solved the same issue upon setting up my Windows 81 PC,0
+Exactly like @George Papatheodorou mentioned above sorry I can not add a comment Eclipse and JRE must be both 64 bit or 32 bit,0
+However it seems for Windows 8/8 1 environment you are going to get 32-bit JRE by default and I do not know where to change that default for the download as explained here http//javacom/en/download/faq/win8_faqxml I was using 64-bit Eclipse so there was a discrepancy,0
+I then installed 32-bit Eclipse and everything works fine this time,0
+So before bothering changing any environment variables check your JRE and Eclipse version,0
+Of course you can use 64-bit JRE with 64-bit Eclipse,0
+Just make sure they match because Windows 81 will give you 32-bit by default,0
+Here s a basic solution offered by jpdymond https//stackoverflowcom/a/22186845/212950,0
+Your version of Eclipse is 64-bit based on the paths and filenames,0
+However the version of Java that it s picking up is 32-bit as indicated by where it is coming from indicated on this line <code>Program Files (x86)</code> is the folder where 64-bit Windows places 32-bit programs,0
+<code>Program Files</code> is the folder where 64-bit Windows places 64-bit programs,0
+This can happen when a system has more than one JVM installed as is often the case on Windows 64-bit for example the JRE download page uses the bit-ness of the browser to determine what bit-ness download to offer you and many people use d 32-bit browsers even though they run 64-bit Windows,0
+The best way to fix this assuming you do in fact have 64-bit JRE or JDK on your system is to specify in <code>eclipseini</code> exactly which JVM you want it to use,0
+The instructions are detailed in the Eclipse wiki page but basically you have to specify the <code>-vm</code> option in the ini file - make sure to read the wiki page carefully as the format is very specific,0
+Specifying the JVM path in <code>eclipseini</code> is strongly recommended because doing so isolates Eclipse from any potential changes to your system <code>PATH</code> that some program installers might make I m talking to you Oracle !,0
+Another option would be to download and use 32-bit Eclipse instead of 64-bit but it s still strongly recommended to specify the path to the JVM in <code>eclipseini</code>,0
+Left for historical reference To check your version of Java run in a console command prompt,0
+If you really want decimal numbers for calculation and not only for output do not use a binary-based floating point format like double,0
+Use BigDecimal or any other decimal-based format,1
+-- Paŭlo Ebermann I do use BigDecimal for calculations but bear in mind it is dependent on the size of numbers you re dealing with,0
+In most my implementations i find parsing from double or integer to Long is sufficient enough for very large number calculations,1
+In fact i ve recently used parsed-to-Long to get accurate representations as opposed to hex results in a gui for numbers as big as ################################# characters as an example,0
+The code snippet below shows how to display n digits,0
+The trick is to set variable pp to 1 followed by n zeros,0
+In the example below variable pp value has 5 zeros so 5 digits will be displayed,0
+You can use the DecimalFormat class,1
+As some others have noted the correct answer is to use either <code>DecimalFormat</code> or <code>BigDecimal</code>,1
+Floating-point doesnt have decimal places so you can not possibly round/truncate to a specific number of them in the first place,1
+You have to work in a decimal radix and that is what those two classes do,0
+I am posting the following code as a counter-example to all the answers in this thread and indeed all over StackOverflow and elsewhere that recommend multiplication followed by truncation followed by division,0
+It is incumbent on advocates of this technique to explain why the following code produces the wrong output in over 92 % of cases,0
+Output of this program EDIT I note that this post has been here for nearly six months and no explanations have been forthcoming,0
+Actually if you use HashSet as Tom Hawtin proposed you do n`t need to worry about sorting and your speed is the same as with Binary Search on a presorted array probably even faster,1
+It all depends on how your code is set up obviously but from where I stand the order would be On an UNsorted array On a sorted array So either way HashSet ftw,0
+Instead of using the quick array initialsation syntax to you could just initialise it as a List straight away in a similar manner using the ArraysasList method eg Then you can do like above <code>STRINGScontains(the string you want to find);</code>,1
+You can use <code>ArrayUtilscontains</code> from Apache Commons Lang <code>public static boolean contains(Object[] array Object objectToFind)</code> Note that this method returns <code>false</code> if the passed array is <code>null</code>,1
+There are also methods available for primitive arrays of all kinds,0
+If you have the google collections library Tom s answer can be simplified a lot by using ImmutableSet http//google-collectionsgooglecodecom/svn/trunk/javadoc/com/google/common/collect/ImmutableSethtml This really removes a lot of clutter from the initialization proposed,0
+I m surprised no one suggested to just simply implement it by hand Improvement The <code>v ! null</code> condition is constant inside the method it always evaluates to the same boolean value during the method call,0
+So if the input <code>array</code> is big it is more efficient to evaluate this condition only once and we can use a simplified/faster condition inside the <code>for</code> loop based on the result,0
+The improved <code>contains()</code> method,0
+Use <code>ArrayBinarySearch(arrayobj)</code> for finding the given object in array or not,1
+Ex if ArrayBinarySearch str i > -1 -- > true -- exists false -- not exists,0
+While some of the answers are technically correct they are not advisable,0
+A few notes about Joda-Time follow,0
+In Joda-Time a DateTime object truly knows its own assigned time zone,1
+This contrasts the javautilDate class which seems to have a time zone but does not,1
+Note in the example code below how we pass a time zone object to the formatter which parses the string,0
+That time zone is used to interpret that <code>000000</code>-time as having occurred in that time zone,0
+So you need to think about and determine the time zone represented by that string input,0
+Since you have no time portion in your input string Joda-Time assigns the first moment of the day of the specified time zone as the time-of-day,0
+Usually this means <code>withTimeAtStartOfDay</code> but not always because of Daylight Saving Time DST or other anomalies,0
+By the way you can do the same to any DateTime instance by calling <code>withZone</code>,0
+The characters used in a formatter s pattern are similar in Joda-Time to those in javautilDate / Calendar but not exactly the same,1
+Carefully read the doc,0
+We usually use the immutable classes in Joda-Time,0
+Rather than modify an existing Date-Time object we call methods that create a new fresh instance based on the other object with most aspects copied except where alterations were desired,0
+An example is the call to <code>date</code> in last line below,0
+Immutability helps to make Joda-Time very thread-safe and can also make some work more clear,1
+You will need javautilDate objects for use with other classes/framework that do not know about Joda-Time objects,1
+Fortunately it is very easy to move back and forth,0
+With Java 8 we get a new Date / Time API JSR 310,1
+The following way can be used to parse the date in Java 8 without relying on Joda-Time <code>parse()</code> is the standard Java 8 class for representing a date without time,0
+If you want to parse values that contain date and time information you should use <code>LocalDate</code>Time,1
+For values with timezones use ZonedDateTime,1
+My humble test program,0
+I use it to play around with the formatter and look-up long dates that I find in log-files but who has put them there,0
+My test program Test results,0
+Simple two formtter we are used 1 which format date we want ?,0
+2 Which format date actully present ?,0
+We parse full date to time format,0
+Protected Accessible only to the classes in the same package and to the subclasses eg,0
