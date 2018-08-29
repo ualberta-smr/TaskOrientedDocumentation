@@ -21,7 +21,7 @@ You also need a MongoDB server running on port 27017 since that's where the outp
 
 The api/ folder holds code that uses the Stack Exchange API to query for threads and posts on Stack Overflow. 
 
-The learning/ folder holds the code we used for building the classifier for insights extraction. The main part of the code in that folder is included in the sentiments.py file which trains, tests and stores the model in a file named "res.model".
+The learning/ folder holds the code we used for building the classifier for insights extraction. The main part of the code in that folder is included in the sentiments.py file which trains, tests and stores the model in a file named "res.model". Note that the insight sentence extraction is done on demand. When someone in the survey, clicks on a task, we run the model against all the sentences in the related threads.
 
 The utils/ folder holds general purpose code needed to read files and also static lists that I used throughout the project. 
 
